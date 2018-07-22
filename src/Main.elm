@@ -1,9 +1,13 @@
 module Main exposing (..)
 
-import Html exposing (Html, button, div, h1, h3, img, input, label, text)
-import Html.Attributes exposing (src, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Css exposing (..)
+import Html
+import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input, label, text)
+import Html.Styled.Attributes exposing (css, src, type_, value)
+import Html.Styled.Events exposing (onClick, onInput)
 import Random
+import Renderer
+import Types exposing (PointList)
 
 
 ---- MODEL ----
@@ -15,7 +19,7 @@ type alias MaybeValidation =
 
 type Model
     = CollectingGenerationInput String MaybeValidation
-    | DisplayingPointPlot Int (List ( Int, Int ))
+    | DisplayingPointPlot Int PointList
 
 
 init : ( Model, Cmd Msg )
@@ -30,7 +34,7 @@ init =
 type Msg
     = UpdateSeedInput String
     | ValidateSeedInput String
-    | DisplayPointPlot Int (List ( Int, Int ))
+    | DisplayPointPlot Int PointList
     | NoOp
 
 
@@ -48,7 +52,7 @@ update msg model =
         ValidateSeedInput seedInput ->
             let
                 pointGenerator =
-                    Random.list 256 <| Random.pair (Random.int 0 255) (Random.int 0 255)
+                    Random.list 256 <| Random.pair (Random.float -1.0 1.0) (Random.float -1.0 1.0)
             in
             case String.toInt seedInput of
                 Ok seed ->
@@ -74,18 +78,16 @@ view model =
         stepView =
             case model of
                 CollectingGenerationInput seedInput validation ->
-                    getGenerateInputView seedInput validation
+                    generateInputView seedInput validation
 
                 DisplayingPointPlot seed points ->
-                    div []
-                        [ h3 [] [ text ("Generating map using seed " ++ toString seed) ]
-                        ]
+                    displayPointPlotView seed points
     in
     div [] [ stepView ]
 
 
-getGenerateInputView : String -> MaybeValidation -> Html Msg
-getGenerateInputView seedInput validation =
+generateInputView : String -> MaybeValidation -> Html Msg
+generateInputView seedInput validation =
     div []
         [ h1 [] [ text "Generate a procedural map!" ]
         , label []
@@ -97,6 +99,24 @@ getGenerateInputView seedInput validation =
         ]
 
 
+displayPointPlotView : Int -> PointList -> Html Msg
+displayPointPlotView seed points =
+    div []
+        [ h3 [] [ text ("Plotted points for seed " ++ toString seed) ]
+        , div
+            [ css
+                [ displayFlex
+                , justifyContent center
+                ]
+            ]
+            [ div
+                [ css [ border3 (px 1) solid (rgb 0 0 0) ]
+                ]
+                [ fromUnstyled (Renderer.renderPoints points) ]
+            ]
+        ]
+
+
 
 ---- PROGRAM ----
 
@@ -104,7 +124,7 @@ getGenerateInputView seedInput validation =
 main : Program Never Model Msg
 main =
     Html.program
-        { view = view
+        { view = view >> Html.Styled.toUnstyled
         , init = init
         , update = update
         , subscriptions = always Sub.none
