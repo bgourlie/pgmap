@@ -7,7 +7,8 @@ import Html.Styled.Attributes exposing (css, src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
 import Random exposing (Seed, initialSeed)
 import Renderer
-import Types exposing (Point, PointList)
+import Set
+import Types exposing (Point, PointSet)
 
 
 ---- MODEL ----
@@ -18,7 +19,7 @@ type alias MaybeValidation =
 
 
 type GenerationStep
-    = DisplayingPointPlot Int PointList
+    = DisplayingPointPlot Int PointSet
 
 
 type alias Model =
@@ -37,7 +38,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialState =
-            { step = DisplayingPointPlot 0 []
+            { step = DisplayingPointPlot 0 Set.empty
             , seedInput = "0"
             , validationMessage = Nothing
             }
@@ -53,7 +54,7 @@ type Msg
     = UpdateSeedInput String
     | ValidateSeedInput String
     | GeneratePointsFromRandomSeed
-    | DisplayPointPlot Int PointList
+    | DisplayPointPlot Int PointSet
     | NoOp
 
 
@@ -90,27 +91,27 @@ pointGenerator =
     Random.pair (Random.float -1.0 1.0) (Random.float -1.0 1.0)
 
 
-generatePointsWithRandomSeed : (Int -> PointList -> msg) -> Int -> Cmd msg
+generatePointsWithRandomSeed : (Int -> PointSet -> msg) -> Int -> Cmd msg
 generatePointsWithRandomSeed msgMapper numPoints =
     Random.int 0 Random.maxInt
         |> Random.generate (\seed -> msgMapper seed (generatePoints seed numPoints))
 
 
-generatePoints : Int -> Int -> PointList
+generatePoints : Int -> Int -> PointSet
 generatePoints seed =
-    generatePointsHelp [] (initialSeed seed)
+    generatePointsHelp Set.empty (initialSeed seed)
 
 
-generatePointsHelp : PointList -> Seed -> Int -> PointList
+generatePointsHelp : PointSet -> Seed -> Int -> PointSet
 generatePointsHelp accumulator seed numPoints =
-    if numPoints <= 0 then
+    if Set.size accumulator >= numPoints then
         accumulator
     else
         let
             ( point, nextSeed ) =
                 Random.step pointGenerator seed
         in
-        generatePointsHelp (point :: accumulator) nextSeed (numPoints - 1)
+        generatePointsHelp (Set.insert point accumulator) nextSeed numPoints
 
 
 
@@ -145,7 +146,7 @@ seedInputView { seedInput, validationMessage } =
         ]
 
 
-displayPointPlotView : Int -> PointList -> Html Msg
+displayPointPlotView : Int -> PointSet -> Html Msg
 displayPointPlotView seed points =
     div []
         [ h3 [] [ text ("Plotted points for seed " ++ toString seed) ]

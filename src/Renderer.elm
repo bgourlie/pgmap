@@ -5,7 +5,8 @@ import Html.Attributes exposing (height, style, width)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2, vec2)
 import Math.Vector3 exposing (vec3)
-import Types exposing (PointList)
+import Set
+import Types exposing (PointSet)
 import WebGL exposing (Mesh, Shader)
 
 
@@ -18,7 +19,7 @@ type alias Uniforms =
     { perspective : Mat4 }
 
 
-renderPoints : PointList -> Html msg
+renderPoints : PointSet -> Html msg
 renderPoints points =
     WebGL.toHtml
         [ width 600
@@ -33,9 +34,10 @@ renderPoints points =
         ]
 
 
-mesh : PointList -> Mesh Vertex
+mesh : PointSet -> Mesh Vertex
 mesh points =
     points
+        |> Set.toList
         |> List.map (\( x, y ) -> { coordinates = vec2 x y })
         |> WebGL.points
 
