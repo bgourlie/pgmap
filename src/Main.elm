@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Algorithms
 import Css exposing (..)
 import Html
 import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input, label, text)
