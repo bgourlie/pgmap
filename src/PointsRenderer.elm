@@ -1,10 +1,6 @@
-module Renderer exposing (renderPoints)
+module PointsRenderer exposing (renderPoints)
 
-import Html exposing (Html)
-import Html.Attributes exposing (height, style, width)
-import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector2 exposing (Vec2, vec2)
-import Math.Vector3 exposing (vec3)
 import Set
 import Types exposing (PointSet)
 import WebGL exposing (Mesh, Shader)
@@ -15,28 +11,18 @@ type alias Vertex =
     }
 
 
-type alias Uniforms =
-    { perspective : Mat4 }
-
-
-renderPoints : PointSet -> Html msg
+renderPoints : PointSet -> WebGL.Entity
 renderPoints points =
-    WebGL.toHtml
-        [ width 600
-        , height 600
-        , style [ ( "display", "block" ) ]
-        ]
-        [ WebGL.entity
-            vertexShader
-            fragmentShader
-            (mesh points)
-            {}
-        ]
+    WebGL.entity
+        vertexShader
+        fragmentShader
+        (mesh points)
+        {}
 
 
 mesh : PointSet -> Mesh Vertex
-mesh points =
-    points
+mesh renderPoints =
+    renderPoints
         |> Set.toList
         |> List.map (\( x, y ) -> { coordinates = vec2 x y })
         |> WebGL.points

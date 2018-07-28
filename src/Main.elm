@@ -2,14 +2,17 @@ module Main exposing (..)
 
 import Algorithms
 import Css exposing (..)
+import CurveRenderer exposing (renderCurve)
 import Html
+import Html.Attributes
 import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input, label, text)
 import Html.Styled.Attributes exposing (css, src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
+import PointsRenderer exposing (renderPoints)
 import Random exposing (Seed, initialSeed)
-import Renderer
 import Set
 import Types exposing (Point, PointSet)
+import WebGL
 
 
 ---- MODEL ----
@@ -160,9 +163,19 @@ displayPointPlotView seed points =
             [ div
                 [ css [ border3 (px 1) solid (rgb 0 0 0) ]
                 ]
-                [ fromUnstyled (Renderer.renderPoints points) ]
+                [ fromUnstyled (glViewport [ renderPoints points, renderCurve ( ( -1, -1 ), ( 0, 1 ), ( 1, -1 ) ) ]) ]
             ]
         ]
+
+
+glViewport : List WebGL.Entity -> Html.Html Msg
+glViewport entities =
+    WebGL.toHtml
+        [ Html.Attributes.width 600
+        , Html.Attributes.height 600
+        , Html.Attributes.style [ ( "display", "block" ) ]
+        ]
+        entities
 
 
 
