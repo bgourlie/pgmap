@@ -1,18 +1,30 @@
 module Main exposing (..)
 
 import Algorithms
-import Css exposing (..)
+import Css
 import CurveRenderer exposing (renderCurve)
 import Html
 import Html.Attributes
 import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input, label, text)
 import Html.Styled.Attributes exposing (css, src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
+import MouseEvents exposing (Position, onMouseMove)
 import PointsRenderer exposing (renderPoints)
 import Random exposing (Seed, initialSeed)
 import Set
 import Types exposing (Point, PointSet)
 import WebGL
+
+
+glViewportHeight : Int
+glViewportHeight =
+    600
+
+
+glViewportWidth : Int
+glViewportWidth =
+    600
+
 
 
 ---- MODEL ----
@@ -28,6 +40,7 @@ type GenerationStep
 
 type alias Model =
     { step : GenerationStep
+    , mousePos : Point
     , seedInput : String
     , validationMessage : MaybeValidation
     }
@@ -43,6 +56,7 @@ init =
     let
         initialState =
             { step = DisplayingPointPlot 0 Set.empty
+            , mousePos = ( 0, 0 )
             , seedInput = "0"
             , validationMessage = Nothing
             }
@@ -59,6 +73,7 @@ type Msg
     | ValidateSeedInput String
     | GeneratePointsFromRandomSeed
     | DisplayPointPlot Int PointSet
+    | UpdateMousePosition MouseEvents.Position
     | NoOp
 
 
@@ -85,6 +100,16 @@ update msg model =
 
         DisplayPointPlot seed points ->
             ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
+
+        UpdateMousePosition pos ->
+            let
+                translatedX =
+                    toFloat pos.x / toFloat glViewportWidth * 2 - 1
+
+                translatedY =
+                    toFloat pos.y / toFloat glViewportHeight * -2 + 1
+            in
+            ( { model | mousePos = ( translatedX, translatedY ) }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -128,7 +153,7 @@ view model =
         stepView =
             case model.step of
                 DisplayingPointPlot seed points ->
-                    displayPointPlotView seed points
+                    displayPointPlotView seed model.mousePos points
     in
     div []
         [ h1 [] [ text "Generate a procedural map!" ]
@@ -150,20 +175,20 @@ seedInputView { seedInput, validationMessage } =
         ]
 
 
-displayPointPlotView : Int -> PointSet -> Html Msg
-displayPointPlotView seed points =
+displayPointPlotView : Int -> Point -> PointSet -> Html Msg
+displayPointPlotView seed mouseCoordinates points =
     div []
         [ h3 [] [ text ("Plotted points for seed " ++ toString seed) ]
         , div
             [ css
-                [ displayFlex
-                , justifyContent center
+                [ Css.displayFlex
+                , Css.justifyContent Css.center
                 ]
             ]
             [ div
-                [ css [ border3 (px 1) solid (rgb 0 0 0) ]
+                [ css [ Css.border3 (Css.px 1) Css.solid (Css.rgb 0 0 0) ]
                 ]
-                [ fromUnstyled (glViewport [ renderPoints points, renderCurve ( ( -1, -1 ), ( 0, 1 ), ( 1, -1 ) ) ]) ]
+                [ fromUnstyled (glViewport [ renderPoints points ]) ]
             ]
         ]
 
@@ -171,9 +196,10 @@ displayPointPlotView seed points =
 glViewport : List WebGL.Entity -> Html.Html Msg
 glViewport entities =
     WebGL.toHtml
-        [ Html.Attributes.width 600
-        , Html.Attributes.height 600
+        [ Html.Attributes.width glViewportWidth
+        , Html.Attributes.height glViewportHeight
         , Html.Attributes.style [ ( "display", "block" ) ]
+        , onMouseMove (\e -> UpdateMousePosition (MouseEvents.relPos e))
         ]
         entities
 
