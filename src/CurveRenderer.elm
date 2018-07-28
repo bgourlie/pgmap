@@ -1,4 +1,4 @@
-module CurveRenderer exposing (renderCurve)
+module CurveRenderer exposing (renderBezierCurve, renderFortunesCurve)
 
 import Math.Vector2 exposing (Vec2, vec2)
 import Set
@@ -11,12 +11,26 @@ type alias Vertex =
     }
 
 
-renderCurve : ( Point, Point, Point ) -> WebGL.Entity
-renderCurve controlPoints =
+renderBezierCurve : ( Point, Point, Point ) -> WebGL.Entity
+renderBezierCurve controlPoints =
     let
         points =
-            generateIntervals 100
+            generateIntervals0To1 100
                 |> List.map (\t -> bezier t controlPoints)
+    in
+    WebGL.entity
+        vertexShader
+        fragmentShader
+        (mesh points)
+        {}
+
+
+renderFortunesCurve : Float -> Point -> WebGL.Entity
+renderFortunesCurve directrix focus =
+    let
+        points =
+            generateIntervalsNeg1To1 100
+                |> List.map (\x -> fortunesCurve directrix focus x)
     in
     WebGL.entity
         vertexShader
@@ -77,17 +91,29 @@ bezier t ( p1, p2, p3 ) =
     )
 
 
-generateIntervals : Int -> List Float
-generateIntervals numIntervals =
+fortunesCurve : Float -> Point -> Float -> Point
+fortunesCurve directrix ( focusX, focusY ) x =
+    let
+        fx =
+            x - focusX
+
+        y =
+            (1 / (2 * (focusY - directrix))) * (fx * fx) + ((focusY + directrix) / 2)
+    in
+    ( x, y )
+
+
+generateIntervals0To1 : Int -> List Float
+generateIntervals0To1 numIntervals =
     let
         step =
             1.0 / toFloat numIntervals
     in
-    0 :: generateIntervalsHelp numIntervals step 1 [ 1 ]
+    0 :: generateIntervals0To1Help numIntervals step 1 [ 1 ]
 
 
-generateIntervalsHelp : Int -> Float -> Float -> List Float -> List Float
-generateIntervalsHelp remainingIntervals step curInterval acc =
+generateIntervals0To1Help : Int -> Float -> Float -> List Float -> List Float
+generateIntervals0To1Help remainingIntervals step curInterval acc =
     if remainingIntervals <= 0 then
         acc
     else
@@ -95,10 +121,25 @@ generateIntervalsHelp remainingIntervals step curInterval acc =
             nextInterval =
                 curInterval - step
         in
-        generateIntervalsHelp (remainingIntervals - 1) step nextInterval (nextInterval :: acc)
+        generateIntervals0To1Help (remainingIntervals - 1) step nextInterval (nextInterval :: acc)
 
 
-testSamples : List Point
-testSamples =
-    generateIntervals 100
-        |> List.map (\t -> bezier t ( ( -1, -1 ), ( 0.25, 1 ), ( 1, -1 ) ))
+generateIntervalsNeg1To1 : Int -> List Float
+generateIntervalsNeg1To1 numIntervals =
+    let
+        step =
+            1.0 / (toFloat numIntervals / 2)
+    in
+    -1 :: generateIntervalsNeg1To1Help numIntervals step 1 [ 1 ]
+
+
+generateIntervalsNeg1To1Help : Int -> Float -> Float -> List Float -> List Float
+generateIntervalsNeg1To1Help remainingIntervals step curInterval acc =
+    if remainingIntervals <= 0 then
+        acc
+    else
+        let
+            nextInterval =
+                curInterval - step
+        in
+        generateIntervals0To1Help (remainingIntervals - 1) step nextInterval (nextInterval :: acc)

@@ -2,12 +2,14 @@ module Main exposing (..)
 
 import Algorithms
 import Css
-import CurveRenderer exposing (renderCurve)
+import CurveRenderer exposing (renderFortunesCurve)
+import Debug
 import Html
 import Html.Attributes
 import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input, label, text)
 import Html.Styled.Attributes exposing (css, src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
+import LineRenderer exposing (renderLines)
 import MouseEvents exposing (Position, onMouseMove)
 import PointsRenderer exposing (renderPoints)
 import Random exposing (Seed, initialSeed)
@@ -55,13 +57,13 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialState =
-            { step = DisplayingPointPlot 0 Set.empty
+            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ])
             , mousePos = ( 0, 0 )
             , seedInput = "0"
             , validationMessage = Nothing
             }
     in
-    ( initialState, generatePointsWithRandomSeed DisplayPointPlot 256 )
+    ( initialState, Cmd.none )
 
 
 
@@ -177,6 +179,10 @@ seedInputView { seedInput, validationMessage } =
 
 displayPointPlotView : Int -> Point -> PointSet -> Html Msg
 displayPointPlotView seed mouseCoordinates points =
+    let
+        ( _, mouseY ) =
+            mouseCoordinates
+    in
     div []
         [ h3 [] [ text ("Plotted points for seed " ++ toString seed) ]
         , div
@@ -188,7 +194,14 @@ displayPointPlotView seed mouseCoordinates points =
             [ div
                 [ css [ Css.border3 (Css.px 1) Css.solid (Css.rgb 0 0 0) ]
                 ]
-                [ fromUnstyled (glViewport [ renderPoints points ]) ]
+                [ fromUnstyled
+                    (glViewport
+                        [ renderLines [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
+                        , renderFortunesCurve mouseY ( 0, 0 )
+                        , renderPoints points
+                        ]
+                    )
+                ]
             ]
         ]
 
