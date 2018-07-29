@@ -8,6 +8,10 @@ type alias Point =
     ( Float, Float )
 
 
+type alias Line =
+    ( Point, Point )
+
+
 type alias PointSet =
     Set Point
 
