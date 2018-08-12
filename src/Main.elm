@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Algorithms exposing (ySortedPoints)
+import Algorithms exposing (FortuneEvent(..), initialEventQueue)
 import Css
 import CurveRenderer exposing (renderFortunesCurve)
 import Debug
@@ -37,7 +37,7 @@ type alias MaybeValidation =
 
 
 type GenerationStep
-    = DisplayingPointPlot Int PointSet PointList
+    = DisplayingPointPlot Int PointSet (List FortuneEvent)
 
 
 type alias Model =
@@ -57,7 +57,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialState =
-            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ]) [ ( 0, 0 ) ]
+            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ]) [ SiteEvent ( 0, 0 ) ]
             , mousePos = ( 0, 0 )
             , seedInput = "0"
             , validationMessage = Nothing
@@ -95,13 +95,13 @@ update msg model =
                         points =
                             generatePoints seed numPoints
                     in
-                    ( { model | step = DisplayingPointPlot seed points (ySortedPoints points) }, Cmd.none )
+                    ( { model | step = DisplayingPointPlot seed points (initialEventQueue points) }, Cmd.none )
 
                 Err _ ->
                     ( { model | validationMessage = Just "Invalid seed input" }, Cmd.none )
 
         DisplayPointPlot seed points ->
-            ( { model | step = DisplayingPointPlot seed points (ySortedPoints points) }, Cmd.none )
+            ( { model | step = DisplayingPointPlot seed points (initialEventQueue points) }, Cmd.none )
 
         UpdateMousePosition pos ->
             let
