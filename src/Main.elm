@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Algorithms exposing (FortuneEvent(..), initialEventQueue)
 import Css
-import CurveRenderer exposing (renderFortunesCurve)
+import CurveRenderer exposing (renderParabola)
 import Debug
 import Html
 import Html.Attributes
@@ -50,7 +50,7 @@ type alias Model =
 
 numPoints : Int
 numPoints =
-    256
+    32
 
 
 init : ( Model, Cmd Msg )
@@ -86,7 +86,7 @@ update msg model =
             ( { model | seedInput = seedInput }, Cmd.none )
 
         GeneratePointsFromRandomSeed ->
-            ( model, generatePointsWithRandomSeed DisplayPointPlot 256 )
+            ( model, generatePointsWithRandomSeed DisplayPointPlot numPoints )
 
         ValidateSeedInput seedInput ->
             case String.toInt seedInput of
@@ -154,8 +154,8 @@ view model =
     let
         stepView =
             case model.step of
-                DisplayingPointPlot seed points _ ->
-                    displayPointPlotView seed model.mousePos points
+                DisplayingPointPlot seed points eventQueue ->
+                    displayPointPlotView seed model.mousePos points eventQueue
     in
     div []
         [ h1 [] [ text "Generate a procedural map!" ]
@@ -177,8 +177,8 @@ seedInputView { seedInput, validationMessage } =
         ]
 
 
-displayPointPlotView : Int -> Point -> PointSet -> Html Msg
-displayPointPlotView seed mouseCoordinates points =
+displayPointPlotView : Int -> Point -> PointSet -> List FortuneEvent -> Html Msg
+displayPointPlotView seed mouseCoordinates points eventQueue =
     let
         ( mouseX, mouseY ) =
             mouseCoordinates
@@ -196,14 +196,33 @@ displayPointPlotView seed mouseCoordinates points =
                 ]
                 [ fromUnstyled
                     (glViewport
-                        [ renderLines [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
-                        , renderFortunesCurve mouseY ( mouseX, 0 )
-                        , renderPoints points
-                        ]
+                        (List.append
+                            [ renderLines [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
+                            , renderPoints points
+                            ]
+                            (fortuneCurves mouseY eventQueue)
+                        )
                     )
                 ]
             ]
         ]
+
+
+fortuneCurves : Float -> List FortuneEvent -> List WebGL.Entity
+fortuneCurves sweepLine events =
+    events
+        |> List.filterMap
+            (\event ->
+                case event of
+                    SiteEvent ( x, y ) ->
+                        if y >= sweepLine then
+                            Just (renderParabola ( x, y ) sweepLine -1 1)
+                        else
+                            Nothing
+
+                    CircleEvent _ ->
+                        Nothing
+            )
 
 
 glViewport : List WebGL.Entity -> Html.Html Msg

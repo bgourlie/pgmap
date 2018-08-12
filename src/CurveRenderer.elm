@@ -1,4 +1,4 @@
-module CurveRenderer exposing (renderBezierCurve, renderFortunesCurve)
+module CurveRenderer exposing (renderBezierCurve, renderParabola)
 
 import Math.Vector2 exposing (Vec2, vec2)
 import Set
@@ -25,18 +25,40 @@ renderBezierCurve controlPoints =
         {}
 
 
-renderFortunesCurve : Float -> Point -> WebGL.Entity
-renderFortunesCurve directrix focus =
+renderParabola : Point -> Float -> Float -> Float -> WebGL.Entity
+renderParabola focus directrix startX endX =
     let
         points =
             generateIntervalsNeg1To1 100
-                |> List.map (\x -> fortunesCurve directrix focus x)
+                |> List.filterMap
+                    (\x ->
+                        if x >= startX && x <= endX then
+                            Just (sampleParabola focus directrix x)
+                        else
+                            Nothing
+                    )
     in
     WebGL.entity
         vertexShader
         fragmentShader
         (mesh points)
         {}
+
+
+{-| Take a point (which we will call the focus) and a straight line (which we will call the directrix). The curve is
+drawn by sampling points on the plane for which the distance to the focus is the same as the distance to the closest
+point on the directrix. The resulting set of points forms the parabola.
+-}
+sampleParabola : Point -> Float -> Float -> Point
+sampleParabola ( focusX, focusY ) directrix x =
+    let
+        fx =
+            x - focusX
+
+        y =
+            (1 / (2 * (focusY - directrix))) * (fx * fx) + ((focusY + directrix) / 2)
+    in
+    ( x, y )
 
 
 mesh : List Point -> Mesh Vertex
@@ -89,18 +111,6 @@ bezier t ( p1, p2, p3 ) =
     ( p1x * mt2 + p2x * 2 * mt * t + p3x * t2
     , p1y * mt2 + p2y * 2 * mt * t + p3y * t2
     )
-
-
-fortunesCurve : Float -> Point -> Float -> Point
-fortunesCurve directrix ( focusX, focusY ) x =
-    let
-        fx =
-            x - focusX
-
-        y =
-            (1 / (2 * (focusY - directrix))) * (fx * fx) + ((focusY + directrix) / 2)
-    in
-    ( x, y )
 
 
 generateIntervals0To1 : Int -> List Float
