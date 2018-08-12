@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Algorithms
+import Algorithms exposing (ySortedPoints)
 import Css
 import CurveRenderer exposing (renderFortunesCurve)
 import Debug
@@ -14,7 +14,7 @@ import MouseEvents exposing (Position, onMouseMove)
 import PointsRenderer exposing (renderPoints)
 import Random exposing (Seed, initialSeed)
 import Set
-import Types exposing (Point, PointSet)
+import Types exposing (Point, PointList, PointSet)
 import WebGL
 
 
@@ -37,7 +37,7 @@ type alias MaybeValidation =
 
 
 type GenerationStep
-    = DisplayingPointPlot Int PointSet
+    = DisplayingPointPlot Int PointSet PointList
 
 
 type alias Model =
@@ -57,7 +57,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialState =
-            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ])
+            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ]) [ ( 0, 0 ) ]
             , mousePos = ( 0, 0 )
             , seedInput = "0"
             , validationMessage = Nothing
@@ -95,13 +95,13 @@ update msg model =
                         points =
                             generatePoints seed numPoints
                     in
-                    ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
+                    ( { model | step = DisplayingPointPlot seed points (ySortedPoints points) }, Cmd.none )
 
                 Err _ ->
                     ( { model | validationMessage = Just "Invalid seed input" }, Cmd.none )
 
         DisplayPointPlot seed points ->
-            ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
+            ( { model | step = DisplayingPointPlot seed points (ySortedPoints points) }, Cmd.none )
 
         UpdateMousePosition pos ->
             let
@@ -154,7 +154,7 @@ view model =
     let
         stepView =
             case model.step of
-                DisplayingPointPlot seed points ->
+                DisplayingPointPlot seed points _ ->
                     displayPointPlotView seed model.mousePos points
     in
     div []
@@ -180,7 +180,7 @@ seedInputView { seedInput, validationMessage } =
 displayPointPlotView : Int -> Point -> PointSet -> Html Msg
 displayPointPlotView seed mouseCoordinates points =
     let
-        ( _, mouseY ) =
+        ( mouseX, mouseY ) =
             mouseCoordinates
     in
     div []
@@ -197,7 +197,7 @@ displayPointPlotView seed mouseCoordinates points =
                 [ fromUnstyled
                     (glViewport
                         [ renderLines [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
-                        , renderFortunesCurve mouseY ( 0, 0 )
+                        , renderFortunesCurve mouseY ( mouseX, 0 )
                         , renderPoints points
                         ]
                     )

@@ -1,16 +1,17 @@
 module Tests exposing (..)
 
-import Test exposing (..)
+import Algorithms exposing (ySortedPoints)
 import Expect
-
-
--- Check out http://package.elm-lang.org/packages/elm-community/elm-test/latest to learn more about testing in Elm!
+import Set
+import Test exposing (..)
 
 
 all : Test
 all =
-    describe "A Test Suite"
-        [ test "BeachTree insert" <|
+    describe "Algorithm Tests"
+        [ test "ySortedPoints test" <|
             \_ ->
-                Expect.pass
+                Set.fromList [ ( 0.2, 1 ), ( 0, 0 ), ( 0.1, 1 ), ( 0.23, -1 ) ]
+                    |> ySortedPoints
+                    |> Expect.equal [ ( 0.23, -1 ), ( 0, 0 ), ( 0.1, 1 ) ]
         ]
