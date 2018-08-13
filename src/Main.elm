@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Algorithms exposing (FortuneEvent(..), initialEventQueue)
+import Algorithms exposing (FortuneEvent(..), fortunesAlgorithm)
 import Css
 import CurveRenderer exposing (renderParabola)
 import Debug
@@ -37,7 +37,7 @@ type alias MaybeValidation =
 
 
 type GenerationStep
-    = DisplayingPointPlot Int PointSet (List FortuneEvent)
+    = DisplayingPointPlot Int PointSet
 
 
 type alias Model =
@@ -57,7 +57,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialState =
-            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ]) [ SiteEvent ( 0, 0 ) ]
+            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ])
             , mousePos = ( 0, 0 )
             , seedInput = "0"
             , validationMessage = Nothing
@@ -95,13 +95,13 @@ update msg model =
                         points =
                             generatePoints seed numPoints
                     in
-                    ( { model | step = DisplayingPointPlot seed points (initialEventQueue points) }, Cmd.none )
+                    ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
 
                 Err _ ->
                     ( { model | validationMessage = Just "Invalid seed input" }, Cmd.none )
 
         DisplayPointPlot seed points ->
-            ( { model | step = DisplayingPointPlot seed points (initialEventQueue points) }, Cmd.none )
+            ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
 
         UpdateMousePosition pos ->
             let
@@ -154,8 +154,8 @@ view model =
     let
         stepView =
             case model.step of
-                DisplayingPointPlot seed points eventQueue ->
-                    displayPointPlotView seed model.mousePos points eventQueue
+                DisplayingPointPlot seed points ->
+                    displayPointPlotView seed model.mousePos points
     in
     div []
         [ h1 [] [ text "Generate a procedural map!" ]
@@ -177,8 +177,8 @@ seedInputView { seedInput, validationMessage } =
         ]
 
 
-displayPointPlotView : Int -> Point -> PointSet -> List FortuneEvent -> Html Msg
-displayPointPlotView seed mouseCoordinates points eventQueue =
+displayPointPlotView : Int -> Point -> PointSet -> Html Msg
+displayPointPlotView seed mouseCoordinates points =
     let
         ( mouseX, mouseY ) =
             mouseCoordinates
@@ -200,7 +200,7 @@ displayPointPlotView seed mouseCoordinates points eventQueue =
                             [ renderLines [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
                             , renderPoints points
                             ]
-                            (fortuneCurves mouseY eventQueue)
+                            (drawFortuneState mouseY points)
                         )
                     )
                 ]
@@ -208,21 +208,13 @@ displayPointPlotView seed mouseCoordinates points eventQueue =
         ]
 
 
-fortuneCurves : Float -> List FortuneEvent -> List WebGL.Entity
-fortuneCurves sweepLine events =
-    events
-        |> List.filterMap
-            (\event ->
-                case event of
-                    SiteEvent ( x, y ) ->
-                        if y >= sweepLine then
-                            Just (renderParabola ( x, y ) sweepLine -1 1)
-                        else
-                            Nothing
-
-                    CircleEvent _ ->
-                        Nothing
-            )
+drawFortuneState : Float -> PointSet -> List WebGL.Entity
+drawFortuneState sweepLine points =
+    let
+        state =
+            fortunesAlgorithm points sweepLine
+    in
+    List.map renderParabola state.beachLine
 
 
 glViewport : List WebGL.Entity -> Html.Html Msg

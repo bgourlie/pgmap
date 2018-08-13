@@ -1,14 +1,54 @@
-module Algorithms exposing (FortuneEvent(..), initialEventQueue)
+module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue)
 
-import BinarySearchTree exposing (Tree)
 import Dict exposing (Dict)
+import FortuneTree
 import Set exposing (Set)
-import Types exposing (Point, PointList, PointSet)
+import Types exposing (Line, Parabola, Point, PointList, PointSet)
+
+
+type alias FortuneState =
+    { completedEdges : List Line
+    , incompleteEdges : List Line
+    , beachLine : List Parabola
+    }
 
 
 type FortuneEvent
     = SiteEvent Point
     | CircleEvent Point
+
+
+fortunesAlgorithm : PointSet -> Float -> FortuneState
+fortunesAlgorithm sites toY =
+    initialEventQueue sites
+        |> List.filterMap
+            (\event ->
+                case event of
+                    SiteEvent ( x, y ) ->
+                        if y >= toY then
+                            Just { focus = ( x, y ), directrix = toY, startX = -1, endX = 1 }
+                        else
+                            Nothing
+
+                    CircleEvent _ ->
+                        Nothing
+            )
+        |> (\parabolas -> { completedEdges = [], incompleteEdges = [], beachLine = parabolas })
+
+
+fortunesAlgorithmHelp : List FortuneEvent -> FortuneState -> FortuneState
+fortunesAlgorithmHelp eventQueue acc =
+    case eventQueue of
+        [] ->
+            acc
+
+        event :: rest ->
+            case event of
+                SiteEvent ( x, y ) ->
+                    fortunesAlgorithmHelp rest acc
+
+                CircleEvent ( x, y ) ->
+                    fortunesAlgorithmHelp rest acc
 
 
 {-| Sort sites by their y position in ascending order. If two sites fall on the same Y coordinate, we maintain the site

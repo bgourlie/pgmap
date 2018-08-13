@@ -18,3 +18,11 @@ type alias PointSet =
 
 type alias PointList =
     List Point
+
+
+type alias Parabola =
+    { focus : Point
+    , directrix : Float
+    , startX : Float
+    , endX : Float
+    }
