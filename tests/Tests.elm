@@ -25,7 +25,7 @@ all =
                         )
                     |> Expect.equal [ ( 0.23, -1 ), ( 0, 0 ), ( 0.1, 1 ) ]
         , describe "FortuneTree Tests"
-            [ test "insert test" <|
+            [ test "insert test 1" <|
                 \_ ->
                     FortuneTree.singleton ( 0, 0 )
                         |> FortuneTree.insert ( 1, 0 )
@@ -35,7 +35,32 @@ all =
                         |> FortuneTree.insert ( 2, 2 )
                         |> FortuneTree.insert ( 2, 3 )
                         |> FortuneTree.insert ( 3, 0 )
+                        |> FortuneTree.insert ( 3, 1 )
+                        |> FortuneTree.insert ( 3, 2 )
                         |> FortuneTree.flatten
-                        |> Expect.equal [ ( 0, 0 ), ( 1, 0 ), ( 1, 1 ), ( 2, 0 ), ( 2, 1 ), ( 2, 2 ), ( 2, 3 ), ( 3, 0 ) ]
+                        |> Expect.equal ( 5, [ ( 3, 2 ), ( 3, 1 ), ( 3, 0 ), ( 2, 3 ), ( 2, 2 ), ( 2, 1 ), ( 2, 0 ), ( 1, 1 ), ( 1, 0 ), ( 0, 0 ) ] )
+            , test "insert test 2" <|
+                \_ ->
+                    FortuneTree.empty
+                        |> FortuneTree.flatten
+                        |> Expect.equal ( 0, [] )
+            , test "insert test 3" <|
+                \_ ->
+                    FortuneTree.singleton ( 0, 0 )
+                        |> FortuneTree.flatten
+                        |> Expect.equal ( 1, [ ( 0, 0 ) ] )
+            , test "insert test 4" <|
+                \_ ->
+                    FortuneTree.singleton ( 0, 0 )
+                        |> FortuneTree.insert ( 1, 0 )
+                        |> FortuneTree.flatten
+                        |> Expect.equal ( 1, [ ( 1, 0 ), ( 0, 0 ) ] )
+            , test "insert test 5" <|
+                \_ ->
+                    FortuneTree.singleton ( 1, 0 )
+                        |> FortuneTree.insert ( 2, 1 )
+                        |> FortuneTree.insert ( 2, 2 )
+                        |> FortuneTree.flatten
+                        |> Expect.equal ( 2, [ ( 2, 2 ), ( 2, 1 ), ( 1, 0 ) ] )
             ]
         ]

@@ -1,4 +1,4 @@
-module FortuneTree exposing (FortuneTree(..), flatten, insert, singleton)
+module FortuneTree exposing (FortuneTree(..), empty, flatten, insert, singleton)
 
 import DifferenceList exposing (DifferenceList)
 import Types exposing (Point)
@@ -7,6 +7,11 @@ import Types exposing (Point)
 type FortuneTree
     = Empty
     | Node Point FortuneTree FortuneTree
+
+
+empty : FortuneTree
+empty =
+    Empty
 
 
 singleton : Point -> FortuneTree
@@ -27,19 +32,36 @@ insert newPoint tree =
             Node point (insert newPoint left) right
 
 
-flatten : FortuneTree -> List Point
+{-| Returns a leaf count and a flattened list ordered with leaves first and moving right to left.
+-}
+flatten : FortuneTree -> ( Int, List Point )
 flatten tree =
-    flattenHelp tree
-        |> DifferenceList.toList
+    flattenHelp 0 tree
+        |> (\( leafCount, dList ) -> ( floor (toFloat leafCount / 2.0), List.reverse (DifferenceList.toList dList) ))
 
 
-flattenHelp : FortuneTree -> DifferenceList Point
-flattenHelp tree =
+flattenHelp : Int -> FortuneTree -> ( Int, DifferenceList Point )
+flattenHelp leafCount tree =
     case tree of
         Empty ->
-            DifferenceList.fromList []
+            ( leafCount, DifferenceList.fromList [] )
 
         Node point left right ->
-            DifferenceList.append
-                (DifferenceList.append (DifferenceList.fromList [ point ]) (flattenHelp right))
-                (flattenHelp left)
+            let
+                newLeafCount =
+                    if right == Empty then
+                        leafCount + 1
+                    else
+                        leafCount
+
+                ( rightLeafCount, rightDList ) =
+                    flattenHelp newLeafCount right
+
+                ( leftLeafCount, leftDList ) =
+                    flattenHelp newLeafCount left
+            in
+            ( rightLeafCount + leftLeafCount
+            , DifferenceList.append
+                (DifferenceList.append (DifferenceList.fromList [ point ]) rightDList)
+                leftDList
+            )
