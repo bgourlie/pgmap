@@ -1,7 +1,7 @@
 module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue)
 
 import Dict exposing (Dict)
-import FortuneTree
+import FortuneTree exposing (FortuneTree(..))
 import Set exposing (Set)
 import Types exposing (Line, Parabola, Point, PointList, PointSet)
 
@@ -36,19 +36,19 @@ fortunesAlgorithm sites toY =
         |> (\parabolas -> { completedEdges = [], incompleteEdges = [], beachLine = parabolas })
 
 
-fortunesAlgorithmHelp : List FortuneEvent -> FortuneState -> FortuneState
-fortunesAlgorithmHelp eventQueue acc =
+fortunesAlgorithmHelp : List FortuneEvent -> FortuneTree -> FortuneTree
+fortunesAlgorithmHelp eventQueue tree =
     case eventQueue of
         [] ->
-            acc
+            tree
 
         event :: rest ->
             case event of
                 SiteEvent ( x, y ) ->
-                    fortunesAlgorithmHelp rest acc
+                    fortunesAlgorithmHelp rest tree
 
                 CircleEvent ( x, y ) ->
-                    fortunesAlgorithmHelp rest acc
+                    fortunesAlgorithmHelp rest tree
 
 
 {-| Sort sites by their y position in ascending order. If two sites fall on the same Y coordinate, we maintain the site

@@ -38,29 +38,29 @@ all =
                         |> FortuneTree.insert ( 3, 1 )
                         |> FortuneTree.insert ( 3, 2 )
                         |> FortuneTree.flatten
-                        |> Expect.equal ( 5, [ ( 3, 2 ), ( 3, 1 ), ( 3, 0 ), ( 2, 3 ), ( 2, 2 ), ( 2, 1 ), ( 2, 0 ), ( 1, 1 ), ( 1, 0 ), ( 0, 0 ) ] )
+                        |> Expect.equal [ ( 0, 0 ), ( 1, 0 ), ( 2, 0 ), ( 3, 0 ), ( 1, 1 ), ( 2, 1 ), ( 3, 1 ), ( 2, 2 ), ( 3, 2 ), ( 2, 3 ) ]
             , test "insert test 2" <|
                 \_ ->
                     FortuneTree.empty
                         |> FortuneTree.flatten
-                        |> Expect.equal ( 0, [] )
+                        |> Expect.equal []
             , test "insert test 3" <|
                 \_ ->
                     FortuneTree.singleton ( 0, 0 )
                         |> FortuneTree.flatten
-                        |> Expect.equal ( 1, [ ( 0, 0 ) ] )
+                        |> Expect.equal [ ( 0, 0 ) ]
             , test "insert test 4" <|
                 \_ ->
                     FortuneTree.singleton ( 0, 0 )
                         |> FortuneTree.insert ( 1, 0 )
                         |> FortuneTree.flatten
-                        |> Expect.equal ( 1, [ ( 1, 0 ), ( 0, 0 ) ] )
+                        |> Expect.equal [ ( 0, 0 ), ( 1, 0 ) ]
             , test "insert test 5" <|
                 \_ ->
                     FortuneTree.singleton ( 1, 0 )
                         |> FortuneTree.insert ( 2, 1 )
                         |> FortuneTree.insert ( 2, 2 )
                         |> FortuneTree.flatten
-                        |> Expect.equal ( 2, [ ( 2, 2 ), ( 2, 1 ), ( 1, 0 ) ] )
+                        |> Expect.equal [ ( 1, 0 ), ( 2, 1 ), ( 2, 2 ) ]
             ]
         ]

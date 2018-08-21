@@ -21,47 +21,55 @@ singleton site =
 
 insert : Point -> FortuneTree -> FortuneTree
 insert newPoint tree =
+    let
+        ( _, newYPos ) =
+            newPoint
+    in
     case tree of
         Empty ->
             singleton newPoint
 
-        Node point left Empty ->
-            Node point left (singleton newPoint)
-
         Node point left right ->
-            Node point (insert newPoint left) right
+            let
+                ( _, yPos ) =
+                    point
+            in
+            if newYPos > yPos then
+                Node point left (insert newPoint right)
+            else if newYPos < yPos then
+                Node point (insert newPoint left) right
+            else
+                case ( left, right ) of
+                    ( Node _ _ _, Empty ) ->
+                        Node point left (insert newPoint right)
+
+                    _ ->
+                        Node point (insert newPoint left) right
 
 
-{-| Returns a leaf count and a flattened list ordered with leaves first and moving right to left.
+
+{-| Returns a flattened list ordered with leaves first and moving right to left.
 -}
-flatten : FortuneTree -> ( Int, List Point )
+flatten : FortuneTree -> List Point
 flatten tree =
-    flattenHelp 0 tree
-        |> (\( leafCount, dList ) -> ( floor (toFloat leafCount / 2.0), List.reverse (DifferenceList.toList dList) ))
+    flattenHelp tree
+        |> DifferenceList.toList
 
 
-flattenHelp : Int -> FortuneTree -> ( Int, DifferenceList Point )
-flattenHelp leafCount tree =
+flattenHelp : FortuneTree -> DifferenceList Point
+flattenHelp tree =
     case tree of
         Empty ->
-            ( leafCount, DifferenceList.fromList [] )
+            DifferenceList.fromList []
 
         Node point left right ->
             let
-                newLeafCount =
-                    if right == Empty then
-                        leafCount + 1
-                    else
-                        leafCount
+                leftDList =
+                    flattenHelp left
 
-                ( rightLeafCount, rightDList ) =
-                    flattenHelp newLeafCount right
-
-                ( leftLeafCount, leftDList ) =
-                    flattenHelp newLeafCount left
+                rightDList =
+                    flattenHelp right
             in
-            ( rightLeafCount + leftLeafCount
-            , DifferenceList.append
-                (DifferenceList.append (DifferenceList.fromList [ point ]) rightDList)
-                leftDList
-            )
+            DifferenceList.append
+                (DifferenceList.append (DifferenceList.fromList [ point ]) leftDList)
+                rightDList
