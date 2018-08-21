@@ -1,4 +1,4 @@
-module FortuneTree exposing (FortuneTree(..), empty, flatten, insert, singleton)
+module FortuneTree exposing (FortuneTree(..), PointType(..), empty, flatten, insert, singleton)
 
 import DifferenceList exposing (DifferenceList)
 import Types exposing (Point)
@@ -7,6 +7,11 @@ import Types exposing (Point)
 type FortuneTree
     = Empty
     | Node Point FortuneTree FortuneTree
+
+
+type PointType
+    = Edge Point
+    | Curve Point
 
 
 empty : FortuneTree
@@ -21,42 +26,28 @@ singleton site =
 
 insert : Point -> FortuneTree -> FortuneTree
 insert newPoint tree =
-    let
-        ( _, newYPos ) =
-            newPoint
-    in
     case tree of
         Empty ->
             singleton newPoint
 
         Node point left right ->
-            let
-                ( _, yPos ) =
-                    point
-            in
-            if newYPos > yPos then
+            if newPoint > point then
                 Node point left (insert newPoint right)
-            else if newYPos < yPos then
+            else if newPoint < point then
                 Node point (insert newPoint left) right
             else
-                case ( left, right ) of
-                    ( Node _ _ _, Empty ) ->
-                        Node point left (insert newPoint right)
-
-                    _ ->
-                        Node point (insert newPoint left) right
-
+                tree
 
 
 {-| Returns a flattened list ordered with leaves first and moving right to left.
 -}
-flatten : FortuneTree -> List Point
+flatten : FortuneTree -> List PointType
 flatten tree =
     flattenHelp tree
         |> DifferenceList.toList
 
 
-flattenHelp : FortuneTree -> DifferenceList Point
+flattenHelp : FortuneTree -> DifferenceList PointType
 flattenHelp tree =
     case tree of
         Empty ->
@@ -64,6 +55,14 @@ flattenHelp tree =
 
         Node point left right ->
             let
+                pointType =
+                    case ( left, right ) of
+                        ( Empty, Empty ) ->
+                            Curve point
+
+                        _ ->
+                            Edge point
+
                 leftDList =
                     flattenHelp left
 
@@ -71,5 +70,5 @@ flattenHelp tree =
                     flattenHelp right
             in
             DifferenceList.append
-                (DifferenceList.append (DifferenceList.fromList [ point ]) leftDList)
+                (DifferenceList.append (DifferenceList.fromList [ pointType ]) leftDList)
                 rightDList
