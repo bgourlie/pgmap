@@ -5,6 +5,14 @@ import Expect
 import FortuneTree exposing (FortuneTree(..), PointType(..))
 import Set
 import Test exposing (..)
+import Test.Runner.Html
+
+
+main : Test.Runner.Html.TestProgram
+main =
+    [ all ]
+        |> concat
+        |> Test.Runner.Html.run
 
 
 all : Test

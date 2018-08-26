@@ -47,7 +47,10 @@ flatten tree =
         |> DifferenceList.toList
 
 
+
 -- TODO: flatten items using inorder traversal
+
+
 flattenHelp : FortuneTree -> DifferenceList PointType
 flattenHelp tree =
     case tree of
