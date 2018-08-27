@@ -1,8 +1,9 @@
 module PointsRenderer exposing (renderPoints)
 
 import Math.Vector2 exposing (Vec2, vec2)
+import Math.Vector3 exposing (Vec3, vec3)
 import Set
-import Types exposing (PointSet)
+import Types exposing (Color, PointSet)
 import WebGL exposing (Mesh, Shader)
 
 
@@ -11,24 +12,29 @@ type alias Vertex =
     }
 
 
-renderPoints : PointSet -> WebGL.Entity
-renderPoints points =
+type alias Uniforms =
+    { color : Vec3
+    }
+
+
+renderPoints : Color -> PointSet -> WebGL.Entity
+renderPoints color points =
     WebGL.entity
         vertexShader
         fragmentShader
         (mesh points)
-        {}
+        { color = Math.Vector3.fromTuple color }
 
 
 mesh : PointSet -> Mesh Vertex
-mesh renderPoints =
-    renderPoints
+mesh points =
+    points
         |> Set.toList
         |> List.map (\( x, y ) -> { coordinates = vec2 x y })
         |> WebGL.points
 
 
-vertexShader : Shader Vertex {} {}
+vertexShader : Shader Vertex Uniforms {}
 vertexShader =
     [glsl|
         attribute vec2 coordinates;
@@ -40,10 +46,13 @@ vertexShader =
     |]
 
 
-fragmentShader : Shader {} {} {}
+fragmentShader : Shader {} Uniforms {}
 fragmentShader =
     [glsl|
+        precision mediump float;
+        uniform vec3 color;
+
         void main () {
-            gl_FragColor = vec4(1, 0.5, 0.25, 1);
+            gl_FragColor = vec4(color, 1);
         }
     |]

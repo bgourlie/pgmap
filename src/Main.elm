@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Algorithms exposing (FortuneEvent(..), fortunesAlgorithm)
+import Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, testIntersection)
 import Css
 import CurveRenderer exposing (renderParabola)
 import Debug
@@ -57,7 +57,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         initialState =
-            { step = DisplayingPointPlot 0 (Set.fromList [ ( 0, 0 ) ])
+            { step = DisplayingPointPlot 0 (Set.fromList [ ( -0.5, 0.9 ), ( 0, 0 ) ])
             , mousePos = ( 0, 0 )
             , seedInput = "0"
             , validationMessage = Nothing
@@ -197,8 +197,8 @@ displayPointPlotView seed mouseCoordinates points =
                 [ fromUnstyled
                     (glViewport
                         (List.append
-                            [ renderLines [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
-                            , renderPoints points
+                            [ renderLines ( 0, 1, 0 ) [ ( ( -1, mouseY ), ( 1, mouseY ) ) ]
+                            , renderPoints ( 1, 0.5, 0.25 ) points
                             ]
                             (drawFortuneState mouseY points)
                         )
@@ -212,9 +212,13 @@ drawFortuneState : Float -> PointSet -> List WebGL.Entity
 drawFortuneState sweepLine points =
     let
         state =
-            fortunesAlgorithm sweepLine points
+            testIntersection sweepLine ( -0.5, 0.9 ) ( 0, 0 )
+
+        intersectionLines =
+            state.intersections
+                |> List.map (\x -> ( ( x, -1 ), ( x, 1 ) ))
     in
-    List.map renderParabola state.beachLine
+    renderLines ( 0, 0, 1 ) intersectionLines :: List.map renderParabola state.beachLine
 
 
 glViewport : List WebGL.Entity -> Html.Html Msg

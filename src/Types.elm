@@ -8,6 +8,10 @@ type alias Point =
     ( Float, Float )
 
 
+type alias Color =
+    ( Float, Float, Float )
+
+
 type alias Line =
     ( Point, Point )
 

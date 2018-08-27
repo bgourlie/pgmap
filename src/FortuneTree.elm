@@ -39,6 +39,31 @@ insert newPoint tree =
                 tree
 
 
+
+--insert2 : Point -> FortuneTree -> FortuneTree -> FortuneTree
+--insert2 newSite previousNode tree =
+--    case tree of
+--        Empty ->
+--            case previousNode of
+--                Empty ->
+--                    singleton newSite
+--
+--                Node parentPoint _ _ ->
+--                    let
+--                        subTree =
+--                            Node parentPoint (parentPoint Empty Empty) (Node newSite (Node newSite Empty Empty) (Node newSite Empty Empty))
+--                    in
+--
+--
+--
+--
+--        Node point left right ->
+--            if newSite > point then
+--                Node point left (insert2 newSite right)
+--            else
+--                Node point (insert2 newSite left) right
+
+
 {-| Returns a flattened list of points orders from least to greatest
 -}
 flatten : FortuneTree -> List FortunePoint

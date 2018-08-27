@@ -1,4 +1,4 @@
-module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue)
+module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue, testIntersection)
 
 import Dict exposing (Dict)
 import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
@@ -10,6 +10,7 @@ type alias FortuneState =
     { completedEdges : List Line
     , incompleteEdges : List Line
     , beachLine : List Parabola
+    , intersections : List Float
     }
 
 
@@ -52,7 +53,7 @@ generateFortuneState toY points =
                 _ ->
                     state
         )
-        { completedEdges = [], incompleteEdges = [], beachLine = [] }
+        { completedEdges = [], incompleteEdges = [], beachLine = [], intersections = [] }
         points
 
 
@@ -97,3 +98,48 @@ initialEventQueueHelp acc points =
 
         [] ->
             acc
+
+
+testIntersection : Float -> Point -> Point -> FortuneState
+testIntersection directrix p1 p2 =
+    let
+        ( i1, i2 ) =
+            getIntersection directrix p1 p2
+    in
+    { completedEdges = []
+    , incompleteEdges = []
+    , beachLine =
+        [ { focus = p1
+          , directrix = directrix
+          , startX = -1
+          , endX = 1
+          }
+        , { focus = p2
+          , directrix = directrix
+          , startX = -1
+          , endX = 1
+          }
+        ]
+    , intersections =
+        [ i1
+        , i2
+        ]
+    }
+
+
+getIntersection : Float -> Point -> Point -> ( Float, Float )
+getIntersection d p1 p2 =
+    let
+        ( x1, y1 ) =
+            p1
+
+        ( x2, y2 ) =
+            p2
+
+        i1 =
+            (1 / (y1 - y2)) * (-1 * sqrt ((d * d - d * y1 - d * y2 + y1 * y2) * (x1 * x1 - 2 * x1 * x2 + x2 * x2 + y1 * y1 - 2 * y1 * y2 + y2 * y2)) + d * x1 - d * x2 - x1 * y2 + x2 * y1)
+
+        i2 =
+            (1 / (y1 - y2)) * (sqrt ((d * d - d * y1 - d * y2 + y1 * y2) * (x1 * x1 - 2 * x1 * x2 + x2 * x2 + y1 * y1 - 2 * y1 * y2 + y2 * y2)) + d * x1 - d * x2 - x1 * y2 + x2 * y1)
+    in
+    ( i1, i2 )
