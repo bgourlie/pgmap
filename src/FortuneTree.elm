@@ -39,16 +39,12 @@ insert newPoint tree =
                 tree
 
 
-{-| Returns a flattened list ordered with leaves first and moving right to left.
+{-| Returns a flattened list of points orders from least to greatest
 -}
 flatten : FortuneTree -> List PointType
 flatten tree =
     flattenHelp tree
         |> DifferenceList.toList
-
-
-
--- TODO: flatten items using inorder traversal
 
 
 flattenHelp : FortuneTree -> DifferenceList PointType
@@ -66,13 +62,7 @@ flattenHelp tree =
 
                         _ ->
                             Edge point
-
-                leftDList =
-                    flattenHelp left
-
-                rightDList =
-                    flattenHelp right
             in
             DifferenceList.append
-                (DifferenceList.append (DifferenceList.fromList [ pointType ]) leftDList)
-                rightDList
+                (DifferenceList.append (flattenHelp left) (DifferenceList.fromList [ pointType ]))
+                (flattenHelp right)
