@@ -1,4 +1,4 @@
-module FortuneTree exposing (FortuneTree(..), PointType(..), empty, flatten, insert, singleton)
+module FortuneTree exposing (FortunePoint(..), FortuneTree(..), empty, flatten, insert, singleton)
 
 import DifferenceList exposing (DifferenceList)
 import Types exposing (Point)
@@ -9,7 +9,7 @@ type FortuneTree
     | Node Point FortuneTree FortuneTree
 
 
-type PointType
+type FortunePoint
     = Edge Point
     | Curve Point
 
@@ -41,13 +41,13 @@ insert newPoint tree =
 
 {-| Returns a flattened list of points orders from least to greatest
 -}
-flatten : FortuneTree -> List PointType
+flatten : FortuneTree -> List FortunePoint
 flatten tree =
     flattenHelp tree
         |> DifferenceList.toList
 
 
-flattenHelp : FortuneTree -> DifferenceList PointType
+flattenHelp : FortuneTree -> DifferenceList FortunePoint
 flattenHelp tree =
     case tree of
         Empty ->

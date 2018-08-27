@@ -1,7 +1,7 @@
 module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue)
 
 import Dict exposing (Dict)
-import FortuneTree exposing (FortuneTree(..))
+import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
 import Set exposing (Set)
 import Types exposing (Line, Parabola, Point, PointList, PointSet)
 
@@ -18,46 +18,52 @@ type FortuneEvent
     | CircleEvent Point
 
 
-fortunesAlgorithm : PointSet -> Float -> FortuneState
-fortunesAlgorithm sites toY =
-    initialEventQueue sites
-        |> List.filterMap
-            (\event ->
-                case event of
-                    SiteEvent ( x, y ) ->
-                        if y >= toY then
-                            Just { focus = ( x, y ), directrix = toY, startX = -1, endX = 1 }
-                        else
-                            Nothing
-
-                    CircleEvent _ ->
-                        Nothing
-            )
-        |> (\parabolas -> { completedEdges = [], incompleteEdges = [], beachLine = parabolas })
+fortunesAlgorithm : Float -> PointSet -> FortuneState
+fortunesAlgorithm toY sites =
+    initialEventQueue toY sites
+        |> fortunesAlgorithmHelp FortuneTree.empty
+        |> FortuneTree.flatten
+        |> generateFortuneState toY
 
 
-fortunesAlgorithmHelp : List FortuneEvent -> FortuneTree -> FortuneTree
-fortunesAlgorithmHelp eventQueue tree =
+fortunesAlgorithmHelp : FortuneTree -> List FortuneEvent -> FortuneTree
+fortunesAlgorithmHelp tree eventQueue =
     case eventQueue of
         [] ->
             tree
 
         event :: rest ->
             case event of
-                SiteEvent ( x, y ) ->
-                    fortunesAlgorithmHelp rest tree
+                SiteEvent site ->
+                    fortunesAlgorithmHelp (FortuneTree.insert site tree) rest
 
-                CircleEvent ( x, y ) ->
-                    fortunesAlgorithmHelp rest tree
+                CircleEvent site ->
+                    fortunesAlgorithmHelp tree rest
+
+
+generateFortuneState : Float -> List FortunePoint -> FortuneState
+generateFortuneState toY points =
+    List.foldl
+        (\pointType state ->
+            case pointType of
+                Curve point ->
+                    { state | beachLine = { focus = point, directrix = toY, startX = -1, endX = 1 } :: state.beachLine }
+
+                _ ->
+                    state
+        )
+        { completedEdges = [], incompleteEdges = [], beachLine = [] }
+        points
 
 
 {-| Sort sites by their y position in ascending order. If two sites fall on the same Y coordinate, we maintain the site
 with the lowest X coordinate and discard the other. This provides us with the initial state of the event queue when
 executing Fortune's algorithm.
 -}
-initialEventQueue : PointSet -> List FortuneEvent
-initialEventQueue points =
+initialEventQueue : Float -> PointSet -> List FortuneEvent
+initialEventQueue toY points =
     points
+        |> Set.filter (\( _, y ) -> y >= toY)
         |> Set.toList
         |> initialEventQueueHelp Dict.empty
         |> Dict.foldl (\y x acc -> SiteEvent ( x, y ) :: acc) []

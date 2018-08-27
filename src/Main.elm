@@ -212,7 +212,7 @@ drawFortuneState : Float -> PointSet -> List WebGL.Entity
 drawFortuneState sweepLine points =
     let
         state =
-            fortunesAlgorithm points sweepLine
+            fortunesAlgorithm sweepLine points
     in
     List.map renderParabola state.beachLine
 

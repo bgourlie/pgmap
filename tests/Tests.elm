@@ -2,7 +2,7 @@ module Tests exposing (..)
 
 import Algorithms exposing (FortuneEvent(..), initialEventQueue)
 import Expect
-import FortuneTree exposing (FortuneTree(..), PointType(..))
+import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
 import Set
 import Test exposing (..)
 import Test.Runner.Html
