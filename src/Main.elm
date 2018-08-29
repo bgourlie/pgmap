@@ -10,7 +10,7 @@ import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input
 import Html.Styled.Attributes exposing (css, src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
 import LineRenderer exposing (renderLines)
-import MouseEvents exposing (Position, onMouseMove)
+import Mouse
 import PointsRenderer exposing (renderPoints)
 import Random exposing (Seed, initialSeed)
 import Set
@@ -75,7 +75,7 @@ type Msg
     | ValidateSeedInput String
     | GeneratePointsFromRandomSeed
     | DisplayPointPlot Int PointSet
-    | UpdateMousePosition MouseEvents.Position
+    | UpdateMousePosition Point
     | NoOp
 
 
@@ -103,13 +103,13 @@ update msg model =
         DisplayPointPlot seed points ->
             ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
 
-        UpdateMousePosition pos ->
+        UpdateMousePosition (x, y) ->
             let
                 translatedX =
-                    toFloat pos.x / toFloat glViewportWidth * 2 - 1
+                    x / toFloat glViewportWidth * 2 - 1
 
                 translatedY =
-                    toFloat pos.y / toFloat glViewportHeight * -2 + 1
+                    y / toFloat glViewportHeight * -2 + 1
             in
             ( { model | mousePos = ( translatedX, translatedY ) }, Cmd.none )
 
@@ -227,7 +227,7 @@ glViewport entities =
         [ Html.Attributes.width glViewportWidth
         , Html.Attributes.height glViewportHeight
         , Html.Attributes.style [ ( "display", "block" ) ]
-        , onMouseMove (\e -> UpdateMousePosition (MouseEvents.relPos e))
+        , Mouse.onMove (\e -> UpdateMousePosition e.offsetPos)
         ]
         entities
 
