@@ -1,18 +1,10 @@
-module Tests exposing (..)
+module Tests exposing (all)
 
 import Algorithms exposing (FortuneEvent(..), initialEventQueue)
 import Expect
 import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
 import Set
 import Test exposing (..)
-import Test.Runner.Html
-
-
-main : Test.Runner.Html.TestProgram
-main =
-    [ all ]
-        |> concat
-        |> Test.Runner.Html.run
 
 
 all : Test
@@ -20,8 +12,8 @@ all =
     describe "Algorithm Tests"
         [ test "initialEventQueue test" <|
             \_ ->
-                Set.fromList [ ( 0.2, 1 ), ( 0, 0 ), ( 0.1, 1 ), ( 0.23, -1 ) ]
-                    |> initialEventQueue
+                Set.fromList [ ( 0.2, 1.0 ), ( 0.0, 0.0 ), ( 0.1, 1.0 ), ( 0.23, -1.0 ) ]
+                    |> initialEventQueue -1.0
                     |> List.map
                         (\event ->
                             case event of

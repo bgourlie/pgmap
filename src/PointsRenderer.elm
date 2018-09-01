@@ -18,12 +18,12 @@ type alias Uniforms =
 
 
 renderPoints : Color -> PointSet -> WebGL.Entity
-renderPoints color points =
+renderPoints ( r, g, b ) points =
     WebGL.entity
         vertexShader
         fragmentShader
         (mesh points)
-        { color = Math.Vector3.fromTuple color }
+        { color = Math.Vector3.vec3 r g b }
 
 
 mesh : PointSet -> Mesh Vertex

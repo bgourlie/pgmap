@@ -1,4 +1,4 @@
-module Types exposing (..)
+module Types exposing (Color, Line, Parabola, Point, PointList, PointSet)
 
 import Math.Vector2 exposing (Vec2)
 import Set exposing (Set)

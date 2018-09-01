@@ -33,8 +33,10 @@ insert newPoint tree =
         Node point left right ->
             if newPoint > point then
                 Node point left (insert newPoint right)
+
             else if newPoint < point then
                 Node point (insert newPoint left) right
+
             else
                 tree
 

@@ -1,16 +1,17 @@
-module Main exposing (..)
+module Main exposing (GenerationStep(..), MaybeValidation, Model, Msg(..), defaultPoints, displayPointPlotView, drawFortuneState, generatePoints, generatePointsHelp, generatePointsWithRandomSeed, glViewport, glViewportHeight, glViewportWidth, init, main, pointGenerator, seedInputView, update, view)
 
 import Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, testIntersection)
+import Browser exposing (Document)
 import Css
 import CurveRenderer exposing (renderParabola)
 import Debug
 import Html
 import Html.Attributes
+import Html.Events.Extra.Mouse as Mouse
 import Html.Styled exposing (Html, button, div, fromUnstyled, h1, h3, img, input, label, text)
 import Html.Styled.Attributes exposing (css, src, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
 import LineRenderer exposing (renderLines)
-import Mouse
 import PointsRenderer exposing (renderPoints)
 import Random exposing (Seed, initialSeed)
 import Set
@@ -48,8 +49,8 @@ type alias Model =
     }
 
 
-numPoints : Int
-numPoints =
+defaultPoints : Int
+defaultPoints =
     32
 
 
@@ -86,24 +87,24 @@ update msg model =
             ( { model | seedInput = seedInput }, Cmd.none )
 
         GeneratePointsFromRandomSeed ->
-            ( model, generatePointsWithRandomSeed DisplayPointPlot numPoints )
+            ( model, generatePointsWithRandomSeed DisplayPointPlot defaultPoints )
 
         ValidateSeedInput seedInput ->
             case String.toInt seedInput of
-                Ok seed ->
+                Just seed ->
                     let
                         points =
-                            generatePoints seed numPoints
+                            generatePoints seed defaultPoints
                     in
                     ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
 
-                Err _ ->
+                Nothing ->
                     ( { model | validationMessage = Just "Invalid seed input" }, Cmd.none )
 
         DisplayPointPlot seed points ->
             ( { model | step = DisplayingPointPlot seed points }, Cmd.none )
 
-        UpdateMousePosition (x, y) ->
+        UpdateMousePosition ( x, y ) ->
             let
                 translatedX =
                     x / toFloat glViewportWidth * 2 - 1
@@ -137,6 +138,7 @@ generatePointsHelp : PointSet -> Seed -> Int -> PointSet
 generatePointsHelp accumulator seed numPoints =
     if Set.size accumulator >= numPoints then
         accumulator
+
     else
         let
             ( point, nextSeed ) =
@@ -184,7 +186,7 @@ displayPointPlotView seed mouseCoordinates points =
             mouseCoordinates
     in
     div []
-        [ h3 [] [ text ("Plotted points for seed " ++ toString seed) ]
+        [ h3 [] [ text ("Plotted points for seed " ++ String.fromInt seed) ]
         , div
             [ css
                 [ Css.displayFlex
@@ -226,7 +228,7 @@ glViewport entities =
     WebGL.toHtml
         [ Html.Attributes.width glViewportWidth
         , Html.Attributes.height glViewportHeight
-        , Html.Attributes.style [ ( "display", "block" ) ]
+        , Html.Attributes.style "display" "block"
         , Mouse.onMove (\e -> UpdateMousePosition e.offsetPos)
         ]
         entities
@@ -236,11 +238,13 @@ glViewport entities =
 ---- PROGRAM ----
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { view = view >> Html.Styled.toUnstyled
-        , init = init
+    Browser.document
+        { view =
+            \model ->
+                { title = "Procedural generation in Elm!", body = [ (view >> Html.Styled.toUnstyled) model ] }
+        , init = \_ -> init
         , update = update
         , subscriptions = always Sub.none
         }

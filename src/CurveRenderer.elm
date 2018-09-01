@@ -38,6 +38,7 @@ renderParabola { focus, directrix, startX, endX } =
                     (\x ->
                         if x >= startX && x <= endX then
                             Just (sampleParabola focus directrix x)
+
                         else
                             Nothing
                     )
@@ -126,6 +127,7 @@ generateIntervals0To1Help : Int -> Float -> Float -> List Float -> List Float
 generateIntervals0To1Help remainingIntervals step curInterval acc =
     if remainingIntervals <= 0 then
         acc
+
     else
         let
             nextInterval =
@@ -147,6 +149,7 @@ generateIntervalsNeg1To1Help : Int -> Float -> Float -> List Float -> List Float
 generateIntervalsNeg1To1Help remainingIntervals step curInterval acc =
     if remainingIntervals <= 0 then
         acc
+
     else
         let
             nextInterval =
