@@ -1,9 +1,16 @@
-module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue, testIntersection)
+module Algorithms exposing (FortuneEvent(..), ParabolaIntersection(..), fortunesAlgorithm, getIntersection, initialEventQueue, testIntersection)
 
 import Dict exposing (Dict)
 import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
 import Set exposing (Set)
 import Types exposing (Line, Parabola, Point, PointList, PointSet)
+
+
+type ParabolaIntersection
+    = LeftRightIntersection Float Float
+    | SingleIntersection Float
+    | SameParabola
+    | NoIntersection
 
 
 type alias FortuneState =
@@ -103,8 +110,9 @@ initialEventQueueHelp acc points =
 testIntersection : Float -> Point -> Point -> FortuneState
 testIntersection directrix p1 p2 =
     let
-        ( i1, i2 ) =
+        intersections =
             getIntersection directrix p1 p2
+                |> flattenIntersections
     in
     { completedEdges = []
     , incompleteEdges = []
@@ -120,26 +128,60 @@ testIntersection directrix p1 p2 =
           , endX = 1
           }
         ]
-    , intersections =
-        [ i1
-        , i2
-        ]
+    , intersections = intersections
     }
 
 
-getIntersection : Float -> Point -> Point -> ( Float, Float )
+
+-- wolfram alpha: solve {(y2 - d)((x - x1)^2 + y1^2 - d^2) == (y1 - d)((x - x2)^2 + y2^2 - d^2)}
+
+
+getIntersection : Float -> Point -> Point -> ParabolaIntersection
 getIntersection d p1 p2 =
-    let
-        ( x1, y1 ) =
-            p1
+    if p1 == p2 then
+        SameParabola
 
-        ( x2, y2 ) =
-            p2
+    else
+        let
+            ( x1, y1 ) =
+                p1
 
-        i1 =
-            (1 / (y1 - y2)) * (-1 * sqrt ((d * d - d * y1 - d * y2 + y1 * y2) * (x1 * x1 - 2 * x1 * x2 + x2 * x2 + y1 * y1 - 2 * y1 * y2 + y2 * y2)) + d * x1 - d * x2 - x1 * y2 + x2 * y1)
+            ( x2, y2 ) =
+                p2
+        in
+        if y1 < d && y2 > d || y1 > d && y2 < d then
+            NoIntersection
 
-        i2 =
-            (1 / (y1 - y2)) * (sqrt ((d * d - d * y1 - d * y2 + y1 * y2) * (x1 * x1 - 2 * x1 * x2 + x2 * x2 + y1 * y1 - 2 * y1 * y2 + y2 * y2)) + d * x1 - d * x2 - x1 * y2 + x2 * y1)
-    in
-    ( i1, i2 )
+        else if y1 /= y2 then
+            let
+                left =
+                    (1 / (y1 - y2)) * (-1 * sqrt ((d * d - d * y1 - d * y2 + y1 * y2) * (x1 * x1 - 2 * x1 * x2 + x2 * x2 + y1 * y1 - 2 * y1 * y2 + y2 * y2)) + d * x1 - d * x2 - x1 * y2 + x2 * y1)
+
+                right =
+                    (1 / (y1 - y2)) * (sqrt ((d * d - d * y1 - d * y2 + y1 * y2) * (x1 * x1 - 2 * x1 * x2 + x2 * x2 + y1 * y1 - 2 * y1 * y2 + y2 * y2)) + d * x1 - d * x2 - x1 * y2 + x2 * y1)
+            in
+            if left == right then
+                -- If intersections are equal, it's not a parabola, its a line (y1 == d || y2 == d)
+                NoIntersection
+
+            else
+                LeftRightIntersection left right
+
+        else if (d - y2) * (x1 - x2) /= 0 then
+            SingleIntersection ((x1 + x2) / 2)
+
+        else
+            NoIntersection
+
+
+flattenIntersections : ParabolaIntersection -> List Float
+flattenIntersections intersection =
+    case intersection of
+        LeftRightIntersection left right ->
+            [ left, right ]
+
+        SingleIntersection i ->
+            [ i ]
+
+        _ ->
+            []
