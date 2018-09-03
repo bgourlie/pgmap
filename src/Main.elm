@@ -1,6 +1,6 @@
 module Main exposing (GenerationStep(..), MaybeValidation, Model, Msg(..), defaultPoints, displayPointPlotView, drawFortuneState, generatePoints, generatePointsHelp, generatePointsWithRandomSeed, glViewport, glViewportHeight, glViewportWidth, init, main, pointGenerator, seedInputView, update, view)
 
-import Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, testIntersection)
+import Algorithms exposing (FortuneEvent(..), fortunesAlgorithm)
 import Browser exposing (Document)
 import Css
 import CurveRenderer exposing (renderParabola)
@@ -214,13 +214,9 @@ drawFortuneState : Float -> PointSet -> List WebGL.Entity
 drawFortuneState sweepLine points =
     let
         state =
-            testIntersection sweepLine ( -0.5, 0.9 ) ( 0, 0 )
-
-        intersectionLines =
-            state.intersections
-                |> List.map (\x -> ( ( x, -1 ), ( x, 1 ) ))
+            fortunesAlgorithm sweepLine points
     in
-    renderLines ( 0, 0, 1 ) intersectionLines :: List.map renderParabola state.beachLine
+    List.map renderParabola state.beachLine
 
 
 glViewport : List WebGL.Entity -> Html.Html Msg
