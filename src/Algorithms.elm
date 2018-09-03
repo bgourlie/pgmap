@@ -132,10 +132,14 @@ testIntersection directrix p1 p2 =
     }
 
 
+{-| The intersection formula was derived from wolfram alpha using the following input:
 
--- wolfram alpha: solve {(y2 - d)((x - x1)^2 + y1^2 - d^2) == (y1 - d)((x - x2)^2 + y2^2 - d^2)}
+`solve {(y2 - d)((x - x1)^2 + y1^2 - d^2) == (y1 - d)((x - x2)^2 + y2^2 - d^2)}`
 
+This formula is simplified from a more general parabola intersection formula because it can assume that the directrix
+for each parabola is the same.
 
+-}
 getIntersection : Float -> Point -> Point -> ParabolaIntersection
 getIntersection d p1 p2 =
     if p1 == p2 then
