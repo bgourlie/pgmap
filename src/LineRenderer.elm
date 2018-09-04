@@ -17,11 +17,11 @@ type alias Uniforms =
 
 
 renderLines : Color -> List Line -> WebGL.Entity
-renderLines ( r, g, b ) points =
+renderLines ( r, g, b ) lines =
     WebGL.entity
         vertexShader
         fragmentShader
-        (mesh points)
+        (mesh lines)
         { color = Math.Vector3.vec3 r g b }
 
 
