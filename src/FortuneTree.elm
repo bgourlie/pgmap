@@ -1,7 +1,17 @@
 module FortuneTree exposing (FortunePoint(..), FortuneTree(..), empty, flatten, insert, insertSubtree, singleton)
 
+import Parabola exposing (sampleParabola)
 import DifferenceList exposing (DifferenceList)
-import Types exposing (Point)
+import Types exposing (Line, Point)
+
+
+type FortuneNode
+    = UninterruptedParabola Point
+    | LeftIntersectingParabola Point Float
+    | RightIntersectingParabola Point Float
+    | LeftRightIntersectingParabola Point Float Float
+    | Border Line
+
 
 type ParabolaIntersection
     = LeftRightIntersection Float Float
@@ -9,14 +19,34 @@ type ParabolaIntersection
     | SameParabola
     | NoIntersection
 
+
 type FortuneTree
     = Empty
-    | Node Point FortuneTree FortuneTree
+    | Node FortuneNode FortuneTree FortuneTree
 
 
 type FortunePoint
     = Edge Point
     | Curve Point
+
+
+comparisonValue : FortuneNode -> Int
+comparisonValue node =
+    case node of
+        UninterruptedParabola ( x, _ ) ->
+            x
+
+        LeftIntersectingParabola _ x ->
+            x
+
+        RightIntersectingParabola _ x ->
+            x
+
+        LeftRightIntersectingParabola ( x, _ ) _ _ ->
+            x
+
+        Border ( ( x, _ ), _ ) ->
+            x
 
 
 empty : FortuneTree
@@ -26,7 +56,7 @@ empty =
 
 singleton : Point -> FortuneTree
 singleton site =
-    Node site Empty Empty
+    Node (UninterruptedParabola site) Empty Empty
 
 
 insert : Float -> Point -> FortuneTree -> FortuneTree
@@ -41,17 +71,36 @@ insert directrix newPoint tree =
 
         Just parentPoint ->
             let
+                ( leftIntersection, maybeRightIntersection ) =
+                    case getIntersection directrix parentPoint newPoint of
+                        LeftRightIntersection li ri ->
+                            ( li, Just ri )
+
+                        SingleIntersection i ->
+                            ( i, Nothing )
+
+                        _ ->
+                            Debug.todo "Handle this"
+
+                leftIntersectingPoint =
+                    ( leftIntersection, sampleParabola newPoint directrix leftIntersection )
+
                 leftSubTree =
-                    Node parentPoint Empty Empty
+                    Node (RightIntersectingParabola parentPoint leftIntersection) Empty Empty
 
                 rightSubTree =
-                    case getIntersection directrix parentPoint newPoint of
-                        LeftRightIntersection leftIntersection rightIntersection ->
-                            Node leftIntersection (Node newPoint Empty Empty) (Node rightIntersection Empty Empty)
+                    case maybeRightIntersection of
+                        Just rightIntersection ->
+                            let
+                                rightIntersectingPoint =
+                                    ( rightIntersection, sampleParabola newPoint directrix rightIntersection )
+                            in
+                            Node (Border ( leftIntersection, rightIntersection ))
+                                (Node (LeftRightIntersectingParabola newPoint leftIntersection rightIntersection) Empty Empty)
+                                (Node (LeftIntersectingParabola parentPoint rightIntersection) Empty Empty)
 
-                        SingleIntersection intersection ->
-                            Node intersection (Node newPoint Empty Empty) Empty
-
+                        Nothing ->
+                            Node (LeftIntersectingParabola newPoint leftIntersection) Empty Empty
             in
             insertSubtree leftSubTree tree
                 |> insertSubtree rightSubTree
@@ -63,17 +112,24 @@ insertSubtree subTree tree =
         Empty ->
             tree
 
-        Node newPoint _ _ ->
+        Node newNode _ _ ->
             case tree of
                 Empty ->
                     subTree
 
-                Node point left right ->
-                    if newPoint > point then
-                        Node point left (insertSubtree subTree right)
+                Node curNode left right ->
+                    let
+                        newNodeCompareValue =
+                            comparisonValue newNode
+
+                        curNodeCompareValue =
+                            comparisonValue curNode
+                    in
+                    if newNodeCompareValue > curNodeCompareValue then
+                        Node curNode left (insertSubtree subTree right)
 
                     else
-                        Node point (insertSubtree subTree left) right
+                        Node curNode (insertSubtree subTree left) right
 
 
 findParent : Point -> FortuneTree -> Maybe Point -> Maybe Point
@@ -117,6 +173,7 @@ flattenHelp tree =
             DifferenceList.append
                 (DifferenceList.append (flattenHelp left) (DifferenceList.fromList [ pointType ]))
                 (flattenHelp right)
+
 
 {-| The intersection formula was derived from wolfram alpha using the following input:
 

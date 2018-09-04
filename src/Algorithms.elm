@@ -1,9 +1,10 @@
-module Algorithms exposing (FortuneEvent(..), ParabolaIntersection(..), fortunesAlgorithm, initialEventQueue)
+module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQueue)
 
 import Dict exposing (Dict)
 import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
 import Set exposing (Set)
 import Types exposing (Line, Parabola, Point, PointList, PointSet)
+
 
 type alias FortuneState =
     { completedEdges : List Line

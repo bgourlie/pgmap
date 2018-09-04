@@ -1,5 +1,6 @@
 module CurveRenderer exposing (renderBezierCurve, renderParabola)
 
+import Algorithms exposing (sampleParabola)
 import Math.Vector2 exposing (Vec2, vec2)
 import Set
 import Types exposing (Parabola, Point, PointSet)
@@ -48,18 +49,6 @@ renderParabola { focus, directrix, startX, endX } =
         fragmentShader
         (mesh points)
         {}
-
-
-sampleParabola : Point -> Float -> Float -> Point
-sampleParabola ( focusX, focusY ) directrix x =
-    let
-        fx =
-            x - focusX
-
-        y =
-            (1 / (2 * (focusY - directrix))) * (fx * fx) + ((focusY + directrix) / 2)
-    in
-    ( x, y )
 
 
 mesh : List Point -> Mesh Vertex
