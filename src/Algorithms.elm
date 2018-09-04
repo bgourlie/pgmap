@@ -3,13 +3,12 @@ module Algorithms exposing (FortuneEvent(..), fortunesAlgorithm, initialEventQue
 import Dict exposing (Dict)
 import FortuneTree exposing (FortunePoint(..), FortuneTree(..))
 import Set exposing (Set)
-import Types exposing (Line, Parabola, Point, PointList, PointSet)
+import Types exposing (Line, Point, PointList, PointSet)
 
 
 type alias FortuneState =
-    { completedEdges : List Line
-    , incompleteEdges : List Line
-    , beachLine : List Parabola
+    { borders : List Line
+    , beachLine : List { focus : Point, startX : Float, endX : Float }
     }
 
 
@@ -19,16 +18,15 @@ type FortuneEvent
 
 
 fortunesAlgorithm : Float -> PointSet -> FortuneState
-fortunesAlgorithm toY sites =
-    initialEventQueue toY sites
-        |> fortunesAlgorithmHelp FortuneTree.empty
+fortunesAlgorithm directrix sites =
+    initialEventQueue directrix sites
+        |> fortunesAlgorithmHelp directrix FortuneTree.empty
         |> FortuneTree.flatten
-        |> Debug.log "Flattened"
-        |> generateFortuneState toY
+        |> generateFortuneState
 
 
-fortunesAlgorithmHelp : FortuneTree -> List FortuneEvent -> FortuneTree
-fortunesAlgorithmHelp tree eventQueue =
+fortunesAlgorithmHelp : Float -> FortuneTree -> List FortuneEvent -> FortuneTree
+fortunesAlgorithmHelp directrix tree eventQueue =
     case eventQueue of
         [] ->
             tree
@@ -36,24 +34,27 @@ fortunesAlgorithmHelp tree eventQueue =
         event :: rest ->
             case event of
                 SiteEvent site ->
-                    fortunesAlgorithmHelp (FortuneTree.insert site tree) rest
+                    fortunesAlgorithmHelp directrix (FortuneTree.insertParabola directrix site tree) rest
 
                 CircleEvent site ->
-                    fortunesAlgorithmHelp tree rest
+                    fortunesAlgorithmHelp directrix tree rest
 
 
-generateFortuneState : Float -> List FortunePoint -> FortuneState
-generateFortuneState toY points =
+generateFortuneState : List FortunePoint -> FortuneState
+generateFortuneState points =
     List.foldl
         (\pointType state ->
             case pointType of
-                Curve point ->
-                    { state | beachLine = { focus = point, directrix = toY, startX = -1, endX = 1 } :: state.beachLine }
+                Leaf focus startX endX ->
+                    { state | beachLine = { focus = focus, startX = startX, endX = endX } :: state.beachLine }
+
+                BorderEdge b ->
+                    { state | borders = b :: state.borders }
 
                 _ ->
                     state
         )
-        { completedEdges = [], incompleteEdges = [], beachLine = [] }
+        { borders = [], beachLine = [] }
         points
 
 
@@ -62,9 +63,9 @@ with the lowest X coordinate and discard the other. This provides us with the in
 executing Fortune's algorithm.
 -}
 initialEventQueue : Float -> PointSet -> List FortuneEvent
-initialEventQueue toY points =
+initialEventQueue directrix points =
     points
-        |> Set.filter (\( _, y ) -> y >= toY)
+        |> Set.filter (\( _, y ) -> y > directrix)
         |> Set.toList
         |> initialEventQueueHelp Dict.empty
         |> Dict.foldl (\y x acc -> SiteEvent ( x, y ) :: acc) []
@@ -98,5 +99,3 @@ initialEventQueueHelp acc points =
 
         [] ->
             acc
-
-

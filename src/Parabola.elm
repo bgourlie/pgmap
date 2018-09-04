@@ -2,6 +2,7 @@ module Parabola exposing (sampleParabola)
 
 import Types exposing (Point)
 
+
 sampleParabola : Point -> Float -> Float -> Point
 sampleParabola ( focusX, focusY ) directrix x =
     let

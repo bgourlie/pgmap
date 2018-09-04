@@ -68,7 +68,7 @@ all =
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 1, 3 ))
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 2, 3 ))
                         |> FortuneTree.flatten
-                        |> Expect.equal [ Edge ( 0, 0 ), Edge ( 0, 1 ), Edge ( 0, 2 ), Curve ( 0, 3 ), Edge ( 1, 1 ), Edge ( 1, 2 ), Curve ( 1, 3 ), Edge ( 2, 2 ), Curve ( 2, 3 ), Edge ( 3, 2 ) ]
+                        |> Expect.equal [ ParabolaEdge ( 0, 0 ), ParabolaEdge ( 0, 1 ), ParabolaEdge ( 0, 2 ), Leaf ( 0, 3 ), ParabolaEdge ( 1, 1 ), ParabolaEdge ( 1, 2 ), Leaf ( 1, 3 ), ParabolaEdge ( 2, 2 ), Leaf ( 2, 3 ), ParabolaEdge ( 3, 2 ) ]
             , test "insert subtree test 2" <|
                 \_ ->
                     FortuneTree.empty
@@ -78,27 +78,27 @@ all =
                 \_ ->
                     FortuneTree.singleton ( 0, 0 )
                         |> FortuneTree.flatten
-                        |> Expect.equal [ Curve ( 0, 0 ) ]
+                        |> Expect.equal [ Leaf ( 0, 0 ) ]
             , test "insert subtree test 4" <|
                 \_ ->
                     FortuneTree.singleton ( 0, 0 )
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 1, 0 ))
                         |> FortuneTree.flatten
-                        |> Expect.equal [ Edge ( 0, 0 ), Curve ( 1, 0 ) ]
+                        |> Expect.equal [ ParabolaEdge ( 0, 0 ), Leaf ( 1, 0 ) ]
             , test "insert subtree test 5" <|
                 \_ ->
                     FortuneTree.singleton ( 1, 0 )
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 2, 1 ))
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 2, 2 ))
                         |> FortuneTree.flatten
-                        |> Expect.equal [ Edge ( 1, 0 ), Edge ( 2, 1 ), Curve ( 2, 2 ) ]
+                        |> Expect.equal [ ParabolaEdge ( 1, 0 ), ParabolaEdge ( 2, 1 ), Leaf ( 2, 2 ) ]
             , test "insert subtree test 6" <|
                 \_ ->
                     FortuneTree.singleton ( 1, 0 )
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( -1, 1 ))
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 2, 2 ))
                         |> FortuneTree.flatten
-                        |> Expect.equal [ Curve ( -1, 1 ), Edge ( 1, 0 ), Curve ( 2, 2 ) ]
+                        |> Expect.equal [ Leaf ( -1, 1 ), ParabolaEdge ( 1, 0 ), Leaf ( 2, 2 ) ]
             , test "insert subtree test 7" <|
                 \_ ->
                     FortuneTree.singleton ( 25, 0 )
@@ -117,6 +117,6 @@ all =
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 66, 0 ))
                         |> FortuneTree.insertSubtree (FortuneTree.singleton ( 90, 0 ))
                         |> FortuneTree.flatten
-                        |> Expect.equal [ Curve ( 4, 0 ), Edge ( 10, 0 ), Curve ( 12, 0 ), Edge ( 15, 0 ), Curve ( 18, 0 ), Edge ( 22, 0 ), Curve ( 24, 0 ), Edge ( 25, 0 ), Curve ( 31, 0 ), Edge ( 35, 0 ), Curve ( 44, 0 ), Edge ( 50, 0 ), Curve ( 66, 0 ), Edge ( 70, 0 ), Curve ( 90, 0 ) ]
+                        |> Expect.equal [ Leaf ( 4, 0 ), ParabolaEdge ( 10, 0 ), Leaf ( 12, 0 ), ParabolaEdge ( 15, 0 ), Leaf ( 18, 0 ), ParabolaEdge ( 22, 0 ), Leaf ( 24, 0 ), ParabolaEdge ( 25, 0 ), Leaf ( 31, 0 ), ParabolaEdge ( 35, 0 ), Leaf ( 44, 0 ), ParabolaEdge ( 50, 0 ), Leaf ( 66, 0 ), ParabolaEdge ( 70, 0 ), Leaf ( 90, 0 ) ]
             ]
         ]

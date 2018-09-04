@@ -216,7 +216,7 @@ drawFortuneState sweepLine points =
         state =
             fortunesAlgorithm sweepLine points
     in
-    List.map renderParabola state.beachLine
+    List.map (\p -> renderParabola sweepLine p.focus p.startX p.endX) state.beachLine
 
 
 glViewport : List WebGL.Entity -> Html.Html Msg

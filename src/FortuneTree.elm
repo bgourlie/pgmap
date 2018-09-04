@@ -1,11 +1,11 @@
-module FortuneTree exposing (FortunePoint(..), FortuneTree(..), empty, flatten, insert, insertSubtree, singleton)
+module FortuneTree exposing (FortunePoint(..), FortuneTree(..), empty, flatten, insertParabola, insertSubtree, singleton)
 
-import Parabola exposing (sampleParabola)
 import DifferenceList exposing (DifferenceList)
+import Parabola exposing (sampleParabola)
 import Types exposing (Line, Point)
 
 
-type FortuneNode
+type NodeValue
     = UninterruptedParabola Point
     | LeftIntersectingParabola Point Float
     | RightIntersectingParabola Point Float
@@ -22,15 +22,16 @@ type ParabolaIntersection
 
 type FortuneTree
     = Empty
-    | Node FortuneNode FortuneTree FortuneTree
+    | Node NodeValue FortuneTree FortuneTree
 
 
 type FortunePoint
-    = Edge Point
-    | Curve Point
+    = ParabolaEdge Point
+    | BorderEdge Line
+    | Leaf Point Float Float
 
 
-comparisonValue : FortuneNode -> Int
+comparisonValue : NodeValue -> Float
 comparisonValue node =
     case node of
         UninterruptedParabola ( x, _ ) ->
@@ -49,6 +50,25 @@ comparisonValue node =
             x
 
 
+getFocus : NodeValue -> Point
+getFocus val =
+    case val of
+        UninterruptedParabola focus ->
+            focus
+
+        LeftIntersectingParabola focus _ ->
+            focus
+
+        RightIntersectingParabola focus _ ->
+            focus
+
+        LeftRightIntersectingParabola focus _ _ ->
+            focus
+
+        Border _ ->
+            Debug.todo "getFocus value should never be Border. This should never happen but how can we model that?"
+
+
 empty : FortuneTree
 empty =
     Empty
@@ -59,48 +79,54 @@ singleton site =
     Node (UninterruptedParabola site) Empty Empty
 
 
-insert : Float -> Point -> FortuneTree -> FortuneTree
-insert directrix newPoint tree =
+insertParabola : Float -> Point -> FortuneTree -> FortuneTree
+insertParabola directrix newFocus tree =
     let
-        maybeParentPoint =
-            findParent newPoint tree Nothing
+        maybeParentNodeValue =
+            findParent newFocus tree Nothing
     in
-    case maybeParentPoint of
+    case maybeParentNodeValue of
         Nothing ->
-            singleton newPoint
+            singleton newFocus
 
-        Just parentPoint ->
+        Just parentNodeValue ->
             let
+                parentFocus =
+                    getFocus parentNodeValue
+
                 ( leftIntersection, maybeRightIntersection ) =
-                    case getIntersection directrix parentPoint newPoint of
+                    case getIntersection directrix parentFocus newFocus of
                         LeftRightIntersection li ri ->
                             ( li, Just ri )
 
                         SingleIntersection i ->
                             ( i, Nothing )
 
-                        _ ->
-                            Debug.todo "Handle this"
+                        SameParabola ->
+                            Debug.todo "SameParabola This should never happen but how can we model that?"
+
+                        NoIntersection ->
+                            Debug.todo "NoIntersection This should never happen but how can we model that?"
 
                 leftIntersectingPoint =
-                    ( leftIntersection, sampleParabola newPoint directrix leftIntersection )
+                    sampleParabola newFocus directrix leftIntersection
 
                 leftSubTree =
-                    Node (RightIntersectingParabola parentPoint leftIntersection) Empty Empty
+                    Node (RightIntersectingParabola parentFocus leftIntersection) Empty Empty
 
                 rightSubTree =
                     case maybeRightIntersection of
                         Just rightIntersection ->
                             let
                                 rightIntersectingPoint =
-                                    ( rightIntersection, sampleParabola newPoint directrix rightIntersection )
+                                    sampleParabola newFocus directrix rightIntersection
                             in
-                            Node (Border ( leftIntersection, rightIntersection ))
-                                (Node (LeftRightIntersectingParabola newPoint leftIntersection rightIntersection) Empty Empty)
-                                (Node (LeftIntersectingParabola parentPoint rightIntersection) Empty Empty)
+                            Node (Border ( leftIntersectingPoint, rightIntersectingPoint ))
+                                (Node (LeftRightIntersectingParabola newFocus leftIntersection rightIntersection) Empty Empty)
+                                (Node (LeftIntersectingParabola parentFocus rightIntersection) Empty Empty)
 
                         Nothing ->
-                            Node (LeftIntersectingParabola newPoint leftIntersection) Empty Empty
+                            Node (LeftIntersectingParabola newFocus leftIntersection) Empty Empty
             in
             insertSubtree leftSubTree tree
                 |> insertSubtree rightSubTree
@@ -132,18 +158,26 @@ insertSubtree subTree tree =
                         Node curNode (insertSubtree subTree left) right
 
 
-findParent : Point -> FortuneTree -> Maybe Point -> Maybe Point
-findParent newPoint tree parentPoint =
+findParent : Point -> FortuneTree -> Maybe NodeValue -> Maybe NodeValue
+findParent newPoint tree parentNode =
+    let
+        ( newPointComparisonValue, _ ) =
+            newPoint
+    in
     case tree of
         Empty ->
-            parentPoint
+            parentNode
 
-        Node point left right ->
-            if newPoint > point then
-                findParent newPoint right (Just point)
+        Node n left right ->
+            let
+                curNodeComparisonValue =
+                    comparisonValue n
+            in
+            if newPointComparisonValue > curNodeComparisonValue then
+                findParent newPoint right (Just n)
 
             else
-                findParent newPoint left (Just point)
+                findParent newPoint left (Just n)
 
 
 {-| Returns a flattened list of points orders from least to greatest
@@ -160,15 +194,43 @@ flattenHelp tree =
         Empty ->
             DifferenceList.fromList []
 
-        Node point left right ->
+        Node nodeValue left right ->
             let
                 pointType =
                     case ( left, right ) of
                         ( Empty, Empty ) ->
-                            Curve point
+                            case nodeValue of
+                                UninterruptedParabola f ->
+                                    Leaf f -1.0 1.0
+
+                                LeftIntersectingParabola f i ->
+                                    Leaf f i 1.0
+
+                                RightIntersectingParabola f i ->
+                                    Leaf f -1.0 i
+
+                                LeftRightIntersectingParabola f il ir ->
+                                    Leaf f il ir
+
+                                Border b ->
+                                    Debug.todo "XX Should never happen but how do we model that?"
 
                         _ ->
-                            Edge point
+                            case nodeValue of
+                                UninterruptedParabola f ->
+                                    ParabolaEdge f
+
+                                LeftIntersectingParabola f _ ->
+                                    ParabolaEdge f
+
+                                RightIntersectingParabola f _ ->
+                                    ParabolaEdge f
+
+                                LeftRightIntersectingParabola f _ _ ->
+                                    ParabolaEdge f
+
+                                Border b ->
+                                    BorderEdge b
             in
             DifferenceList.append
                 (DifferenceList.append (flattenHelp left) (DifferenceList.fromList [ pointType ]))

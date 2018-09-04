@@ -1,4 +1,4 @@
-module Types exposing (Color, Line, Parabola, Point, PointList, PointSet)
+module Types exposing (Color, Line, Point, PointList, PointSet)
 
 import Math.Vector2 exposing (Vec2)
 import Set exposing (Set)
@@ -22,11 +22,3 @@ type alias PointSet =
 
 type alias PointList =
     List Point
-
-
-type alias Parabola =
-    { focus : Point
-    , directrix : Float
-    , startX : Float
-    , endX : Float
-    }

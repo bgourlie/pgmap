@@ -1,9 +1,9 @@
 module CurveRenderer exposing (renderBezierCurve, renderParabola)
 
-import Algorithms exposing (sampleParabola)
 import Math.Vector2 exposing (Vec2, vec2)
+import Parabola exposing (sampleParabola)
 import Set
-import Types exposing (Parabola, Point, PointSet)
+import Types exposing (Point, PointSet)
 import WebGL exposing (Mesh, Shader)
 
 
@@ -30,8 +30,8 @@ renderBezierCurve controlPoints =
 drawn by sampling points on the plane for which the distance to the focus is the same as the distance to the closest
 point on the directrix. The resulting set of points forms the parabola.
 -}
-renderParabola : Parabola -> WebGL.Entity
-renderParabola { focus, directrix, startX, endX } =
+renderParabola : Float -> Point -> Float -> Float -> WebGL.Entity
+renderParabola directrix focus startX endX =
     let
         points =
             generateIntervalsNeg1To1 100
