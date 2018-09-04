@@ -10,7 +10,7 @@ type NodeValue
     | LeftIntersectingParabola Point Float
     | RightIntersectingParabola Point Float
     | LeftRightIntersectingParabola Point Float Float
-    | Border Line
+    | Border Point Line -- The point is the focus of the parabola that created the initial intersection
 
 
 type ParabolaIntersection
@@ -31,25 +31,6 @@ type FortunePoint
     | Leaf Point Float Float
 
 
-comparisonValue : NodeValue -> Float
-comparisonValue node =
-    case node of
-        UninterruptedParabola ( x, _ ) ->
-            x
-
-        LeftIntersectingParabola _ x ->
-            x
-
-        RightIntersectingParabola _ x ->
-            x
-
-        LeftRightIntersectingParabola ( x, _ ) _ _ ->
-            x
-
-        Border ( ( x, _ ), _ ) ->
-            x
-
-
 getFocus : NodeValue -> Point
 getFocus val =
     case val of
@@ -65,8 +46,8 @@ getFocus val =
         LeftRightIntersectingParabola focus _ _ ->
             focus
 
-        Border _ ->
-            Debug.todo "getFocus value should never be Border. This should never happen but how can we model that?"
+        Border focus _ ->
+            focus
 
 
 empty : FortuneTree
@@ -121,7 +102,7 @@ insertParabola directrix newFocus tree =
                                 rightIntersectingPoint =
                                     sampleParabola newFocus directrix rightIntersection
                             in
-                            Node (Border ( leftIntersectingPoint, rightIntersectingPoint ))
+                            Node (Border newFocus ( leftIntersectingPoint, rightIntersectingPoint ))
                                 (Node (LeftRightIntersectingParabola newFocus leftIntersection rightIntersection) Empty Empty)
                                 (Node (LeftIntersectingParabola parentFocus rightIntersection) Empty Empty)
 
@@ -146,10 +127,10 @@ insertSubtree subTree tree =
                 Node curNode left right ->
                     let
                         newNodeCompareValue =
-                            comparisonValue newNode
+                            getFocus newNode
 
                         curNodeCompareValue =
-                            comparisonValue curNode
+                            getFocus curNode
                     in
                     if newNodeCompareValue > curNodeCompareValue then
                         Node curNode left (insertSubtree subTree right)
@@ -160,10 +141,6 @@ insertSubtree subTree tree =
 
 findParent : Point -> FortuneTree -> Maybe NodeValue -> Maybe NodeValue
 findParent newPoint tree parentNode =
-    let
-        ( newPointComparisonValue, _ ) =
-            newPoint
-    in
     case tree of
         Empty ->
             parentNode
@@ -171,9 +148,9 @@ findParent newPoint tree parentNode =
         Node n left right ->
             let
                 curNodeComparisonValue =
-                    comparisonValue n
+                    getFocus n
             in
-            if newPointComparisonValue > curNodeComparisonValue then
+            if newPoint > curNodeComparisonValue then
                 findParent newPoint right (Just n)
 
             else
@@ -212,7 +189,7 @@ flattenHelp tree =
                                 LeftRightIntersectingParabola f il ir ->
                                     Leaf f il ir
 
-                                Border b ->
+                                Border _ _ ->
                                     Debug.todo "XX Should never happen but how do we model that?"
 
                         _ ->
@@ -229,7 +206,7 @@ flattenHelp tree =
                                 LeftRightIntersectingParabola f _ _ ->
                                     ParabolaEdge f
 
-                                Border b ->
+                                Border _ b ->
                                     BorderEdge b
             in
             DifferenceList.append

@@ -73,11 +73,11 @@ initialEventQueue directrix points =
             (\event ->
                 case event of
                     SiteEvent ( _, y ) ->
-                        y
+                        y * -1
 
                     _ ->
                         -- there should be no other event types in the list
-                        1
+                        Debug.todo "model the fact that this should never happen"
             )
 
 
